@@ -1,23 +1,18 @@
 import 'package:financial_tracker/common/errors/errors_classes.dart';
 import 'package:financial_tracker/common/patterns/command.dart';
-
+import 'package:financial_tracker/common/theme/app_theme.dart';
 import '../../common/utils/formatter.dart';
 import '../../domain/entity/transaction_entity.dart';
 import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 
-/// widget que exibe uma lista de transações de receitas e despesas
+/// Widget que exibe uma lista de transações de receitas e despesas em abas
 class TransactionCardSheets extends StatefulWidget {
-  final List<TransactionEntity>
-  incomeTransactions; // Lista de transações de receitas
-  final List<TransactionEntity>
-  expenseTransactions; // Lista de transações de despesas
-  final Function(String id)
-  onDelete; // Callback para deletar uma transação pelo ID
-
-  final Command1<void, Failure, TransactionEntity>
-  undoDelete; // Callback para desfazer exclusão
-  final BuildContext
-  scaffoldContext; // Contexto do Scaffold para exibir SnackBars
+  final List<TransactionEntity> incomeTransactions;
+  final List<TransactionEntity> expenseTransactions;
+  final Function(String id) onDelete;
+  final Command1<void, Failure, TransactionEntity> undoDelete;
+  final BuildContext scaffoldContext;
 
   const TransactionCardSheets({
     super.key,
@@ -34,313 +29,444 @@ class TransactionCardSheets extends StatefulWidget {
 
 class _TransactionCardSheetsState extends State<TransactionCardSheets>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController; // Controlador para o TabBar e TabBarView
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(
-      length: 2,
-      vsync: this,
-    ); // 2 abas: Receitas e Despesas
+    _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
-      if (mounted)
-        setState(() {}); // Atualiza o estado quando troca de aba acontece
+      if (mounted) setState(() {});
     });
   }
 
   @override
   void dispose() {
-    _tabController.dispose(); // Limpa o controlador para evitar leaks
+    _tabController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Card(
-      elevation: 8, // Elevação do card para sombra
-      margin: const EdgeInsets.all(12), // Margem externa do card
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ), // Bordas arredondadas
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : AppColors.cardLight,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.3)
+                : Colors.black.withValues(alpha: 0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Column(
         children: [
-          Column(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: colorScheme.tertiary.withValues(
-                    alpha: 0.15,
-                  ), // Fundo com transparência
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                  ), // Apenas bordas superiores arredondadas
-                ),
-                child: TabBar(
-                  controller: _tabController, // Controlador das abas
-                  tabs: [
-                    _buildTab(
-                      TransactionType.income.namePlural, // Título da aba
-                      Icons.arrow_upward, // Ícone da aba
-                      0, // Índice da aba
-                      colorScheme.primary, // Cor ativa
-                      colorScheme.primary.withValues(alpha: 0.5), // Cor inativa
+          // ─── Header com abas ──────────────────────────────────────
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Iconsax.receipt_item,
+                      size: 16,
+                      color: isDark ? Colors.white60 : Colors.black45,
                     ),
-                    _buildTab(
-                      TransactionType.expense.namePlural,
-                      Icons.arrow_downward,
-                      1,
-                      colorScheme.secondary,
-                      colorScheme.secondary.withValues(alpha: 0.5),
-                    ),
-                  ],
-                  indicatorColor:
-                      _tabController.index ==
-                              0 // Cor do indicador da aba selecionada
-                          ? colorScheme.primary
-                          : colorScheme.secondary,
-                  indicatorSize:
-                      TabBarIndicatorSize
-                          .label, // Indicador do tamanho do label
-                ),
-              ),
-              ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(20),
-                  bottomRight: Radius.circular(20),
-                ), // Arredonda bordas inferiores para combinar com o card
-                child: SizedBox(
-                  height: 290, // Altura fixa do conteúdo da aba
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildTransactionList(
-                        context,
-                        widget.incomeTransactions, // Lista de receitas
-                        colorScheme.primary,
-                        TransactionType.income.namePlural,
+                    const SizedBox(width: 6),
+                    Text(
+                      'Transações',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: isDark ? Colors.white60 : Colors.black45,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
                       ),
-                      _buildTransactionList(
+                    ),
+                    const Spacer(),
+                    // Contagem de transações
+                    _buildCountBadge(context),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Tab bar customizado
+                Container(
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.06)
+                        : Colors.black.withValues(alpha: 0.04),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: TabBar(
+                    controller: _tabController,
+                    dividerColor: Colors.transparent,
+                    indicator: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: _tabController.index == 0
+                            ? [AppColors.income, const Color(0xFF059669)]
+                            : [AppColors.expense, const Color(0xFFDC2626)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (_tabController.index == 0
+                                  ? AppColors.income
+                                  : AppColors.expense)
+                              .withValues(alpha: 0.35),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    labelPadding: EdgeInsets.zero,
+                    tabs: [
+                      _buildTab(
                         context,
-                        widget.expenseTransactions, // Lista de despesas
-                        colorScheme.secondary,
-                        TransactionType.expense.namePlural,
+                        title: TransactionType.income.namePlural,
+                        icon: Iconsax.arrow_up_2,
+                        count: widget.incomeTransactions.length,
+                        isSelected: _tabController.index == 0,
+                      ),
+                      _buildTab(
+                        context,
+                        title: TransactionType.expense.namePlural,
+                        icon: Iconsax.arrow_down_2,
+                        count: widget.expenseTransactions.length,
+                        isSelected: _tabController.index == 1,
                       ),
                     ],
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
+          ),
+
+          // ─── Lista de transações ──────────────────────────────────
+          SizedBox(
+            height: 300,
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildTransactionList(
+                  context,
+                  transactions: widget.incomeTransactions,
+                  isIncome: true,
+                ),
+                _buildTransactionList(
+                  context,
+                  transactions: widget.expenseTransactions,
+                  isIncome: false,
+                ),
+              ],
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCountBadge(BuildContext context) {
+    final isIncome = _tabController.index == 0;
+    final count = isIncome
+        ? widget.incomeTransactions.length
+        : widget.expenseTransactions.length;
+    final color = isIncome ? AppColors.income : AppColors.expense;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        '$count ${count == 1 ? 'item' : 'itens'}',
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+        ),
       ),
     );
   }
 
   Widget _buildTab(
-    String title,
-    IconData icon,
-    int index,
-    Color activeColor,
-    Color inactiveColor,
-  ) {
-    final isSelected =
-        _tabController.index == index; // Verifica se a aba está selecionada
-    final color =
-        isSelected ? activeColor : inactiveColor; // Cor ativa ou inativa
-
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required int count,
+    required bool isSelected,
+  }) {
     return Tab(
-      child: Row(
-        mainAxisSize: MainAxisSize.min, // Tamanho da linha adaptado ao conteúdo
-        children: [
-          Icon(icon, size: 18, color: color), // Ícone da aba com a cor correta
-          const SizedBox(width: 8), // Espaço entre ícone e texto
-          Text(
-            title, // Texto da aba
-            style: TextStyle(
-              color: color, // Cor do texto (ativa ou inativa)
-              fontWeight:
-                  isSelected
-                      ? FontWeight.bold
-                      : FontWeight.normal, // Negrito se selecionada
+      height: 44,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected ? Colors.white : Colors.grey,
             ),
-          ),
-        ],
+            const SizedBox(width: 6),
+            Text(
+              title,
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.grey,
+                fontWeight:
+                    isSelected ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildTransactionList(
-    BuildContext context,
-    List<TransactionEntity> transactions,
-    Color color,
-    String title,
-  ) {
+    BuildContext context, {
+    required List<TransactionEntity> transactions,
+    required bool isIncome,
+  }) {
     if (transactions.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center, // Centraliza conteúdo
-          children: [
-            Icon(
-              title ==
-                      TransactionType
-                          .income
-                          .namePlural // Receitas
-                  ? Icons.savings
-                  : Icons.shopping_cart, // Ícone condicional
-              size: 48,
-              color: Colors.grey,
+      return _buildEmptyState(context, isIncome: isIncome);
+    }
+
+    final color = isIncome ? AppColors.income : AppColors.expense;
+    final icon = isIncome ? Iconsax.arrow_up_2 : Iconsax.arrow_down_2;
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      physics: const BouncingScrollPhysics(),
+      itemCount: transactions.length,
+      itemBuilder: (context, index) {
+        final transaction = transactions[index];
+        final undoTransaction = transaction.copyWith();
+
+        return Dismissible(
+          key: Key(transaction.id),
+          direction: DismissDirection.endToStart,
+          background: Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 20),
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppColors.expense, Color(0xFFDC2626)],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
             ),
-            const SizedBox(height: 8),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(Iconsax.trash, color: Colors.white, size: 22),
+                SizedBox(height: 4),
+                Text(
+                  'Excluir',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          onDismissed: (direction) async {
+            await widget.onDelete(transaction.id);
+
+            ScaffoldMessenger.of(widget.scaffoldContext).clearSnackBars();
+            ScaffoldMessenger.of(widget.scaffoldContext).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Iconsax.trash, color: Colors.white, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '"${transaction.title}" excluída',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                backgroundColor: AppColors.expense,
+                action: SnackBarAction(
+                  label: 'DESFAZER',
+                  textColor: Colors.white,
+                  onPressed: () async {
+                    await widget.undoDelete.execute(undoTransaction);
+                    if (widget.undoDelete.resultSignal.value?.isSuccess ??
+                        false) {
+                      ScaffoldMessenger.of(widget.scaffoldContext).showSnackBar(
+                        SnackBar(
+                          content: Text('"${transaction.title}" restaurada!'),
+                          backgroundColor: AppColors.income,
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(widget.scaffoldContext).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            widget.undoDelete.resultSignal.value
+                                    ?.failureValueOrNull
+                                    ?.toString() ??
+                                'Erro ao restaurar',
+                          ),
+                          backgroundColor: AppColors.expense,
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ),
+            );
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            decoration: BoxDecoration(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.dividerDark.withValues(alpha: 0.5)
+                  : color.withValues(alpha: 0.04),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: color.withValues(alpha: 0.15),
+                width: 1,
+              ),
+            ),
+            child: ListTile(
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              leading: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isIncome
+                        ? [
+                            AppColors.income.withValues(alpha: 0.2),
+                            AppColors.income.withValues(alpha: 0.1),
+                          ]
+                        : [
+                            AppColors.expense.withValues(alpha: 0.2),
+                            AppColors.expense.withValues(alpha: 0.1),
+                          ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              title: Text(
+                transaction.title,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              subtitle: Row(
+                children: [
+                  Icon(Iconsax.calendar_1,
+                      size: 11,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white38
+                          : Colors.black38),
+                  const SizedBox(width: 3),
+                  Text(
+                    Formatter.formatDate(transaction.date),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white38
+                          : Colors.black38,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+              trailing: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  (isIncome ? '+' : '-') +
+                      Formatter.formatCurrency(transaction.amount),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: color,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context, {required bool isIncome}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = isIncome ? AppColors.income : AppColors.expense;
+    final icon = isIncome ? Iconsax.coin : Iconsax.shopping_cart;
+    final message = isIncome
+        ? 'Nenhuma receita registrada'
+        : 'Nenhuma despesa registrada';
+    final hint = isIncome
+        ? 'Adicione uma receita para começar!'
+        : 'Adicione uma despesa para acompanhar seus gastos!';
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 36, color: color.withValues(alpha: 0.6)),
+            ),
+            const SizedBox(height: 16),
             Text(
-              'Sem ${title.toLowerCase()} registradas', // Mensagem de lista vazia
+              message,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Colors.grey[600],
-              ), // Estilo e cor do texto
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white60 : Colors.black54,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              hint,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: isDark ? Colors.white38 : Colors.black38,
+              ),
             ),
           ],
         ),
-      );
-    }
-
-    return Scrollbar(
-      thumbVisibility: true, // Mostra a barra de rolagem sempre
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(
-          vertical: 8,
-        ), // Espaçamento vertical na lista
-        itemCount: transactions.length, // Quantidade de itens da lista
-        itemBuilder: (context, index) {
-          final transaction = transactions[index];
-          final undoTransaction =
-              transaction.copyWith(); // Cópia para desfazer exclusão
-
-          return Dismissible(
-            key: Key(transaction.id), // Chave única para controle do widget
-            direction:
-                DismissDirection
-                    .endToStart, // Permite deslizar da direita para esquerda
-            background: Container(
-              alignment:
-                  Alignment.centerRight, // Ícone aparece alinhado à direita
-              padding: const EdgeInsets.only(
-                right: 20.0,
-              ), // Espaçamento interno
-              decoration: BoxDecoration(
-                color: Colors.red, // Fundo vermelho para exclusão
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.delete,
-                color: Colors.white,
-              ), // Ícone de exclusão
-            ),
-            onDismissed: (direction) async {
-              
-              await widget.onDelete(
-                transaction.id,
-              ); // Chama callback para deletar transação
-
-              ScaffoldMessenger.of(widget.scaffoldContext).clearSnackBars();
-              // Limpa snackbars anteriores para evitar sobreposição
-
-              ScaffoldMessenger.of(widget.scaffoldContext).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    '${transaction.title} excluída!!!',
-                  ), // Mensagem de exclusão
-                  backgroundColor:
-                      Colors.pinkAccent, // Cor do snackbar vermelho
-                  action: SnackBarAction(
-                    label: 'DESFAZER', // Botão para desfazer
-                    textColor: Colors.white,
-                    onPressed: () async {
-                      // Chama callback para desfazer exclusão
-                      await widget.undoDelete.execute(undoTransaction);
-                      //print(widget.undoDelete.resultSignal.value);
-                      if (widget.undoDelete.resultSignal.value?.isSuccess ??
-                          false) {
-                        ScaffoldMessenger.of(
-                          widget.scaffoldContext,
-                        ).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              '${transaction.title} restaurada!',
-                            ), // Mensagem de restauração
-                            backgroundColor:
-                                Colors.green, // Cor do snackbar verde
-                          ),
-                        );
-                      } else {
-                        ScaffoldMessenger.of(
-                          widget.scaffoldContext,
-                        ).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              '${widget.undoDelete.resultSignal.value?.failureValueOrNull ?? 'Erro desconhecido'}',
-                            ), // Mensagem de restauração
-                            backgroundColor:
-                                Colors.red, // Cor do snackbar verde
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                ),
-              );
-            },
-            child: Card(
-              margin: const EdgeInsets.symmetric(
-                horizontal: 5,
-                vertical: 4,
-              ), // Margem do card da transação
-              elevation: 0, // Sem sombra
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12), // Bordas arredondadas
-                side: BorderSide(
-                  color: Colors.grey.shade300,
-                ), // Borda cinza clara
-              ),
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ), // Espaçamento interno do item
-                leading: CircleAvatar(
-                  radius: 22,
-                  backgroundColor: color.withValues(
-                    alpha: 0.2,
-                  ), // Fundo com transparência
-                  child: Icon(
-                    title == 'Income' ? Icons.attach_money : Icons.shopping_bag,
-                    color: color, // Cor do ícone conforme tipo
-                  ),
-                ),
-                title: Text(
-                  transaction.title, // Título da transação
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                subtitle: Text(
-                  Formatter.formatDate(transaction.date), // Data formatada
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                trailing: Text(
-                  Formatter.formatCurrency(
-                    transaction.amount,
-                  ), // Valor formatado em moeda
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: color, // Cor do texto conforme tipo
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
       ),
     );
   }

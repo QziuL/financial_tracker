@@ -59,9 +59,14 @@ abstract class Command<Success, Error> {
     _running.value = true; // indica que está rodando
     _result.value = null;  // limpa resultado anterior
 
-    _result.value = await action(); // executa a ação
-
-    _running.value = false; // indica que terminou
+    try {
+      _result.value = await action(); // executa a ação
+    } catch (e) {
+      // garante que _running volta para false mesmo em caso de exceção inesperada
+      rethrow;
+    } finally {
+      _running.value = false; // SEMPRE reseta, mesmo se action() lançar exceção
+    }
   }
 }
 

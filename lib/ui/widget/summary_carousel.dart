@@ -1,13 +1,11 @@
-import 'summary_card.dart';
 import 'summary_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
+import '../../common/theme/app_theme.dart';
 
 class SummaryCarousel extends StatefulWidget {
-  /// Total income amount
   final double totalIncome;
-
-  /// Total expense amount
   final double totalExpense;
 
   const SummaryCarousel({
@@ -32,10 +30,10 @@ class _SummaryCarouselState extends State<SummaryCarousel>
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 400),
     );
-    _scaleAnimation = Tween<double>(begin: 0.9, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    _scaleAnimation = Tween<double>(begin: 0.92, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
     );
     _animationController.forward();
   }
@@ -49,109 +47,215 @@ class _SummaryCarouselState extends State<SummaryCarousel>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Column(
-      children: <Widget>[
-        // Animated carousel of financial widgets
+      children: [
+        // ─── Título da seção ────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+          child: Row(
+            children: [
+              Icon(
+                Iconsax.chart_2,
+                size: 16,
+                color: isDark ? Colors.white60 : Colors.black45,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Visão Geral',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: isDark ? Colors.white60 : Colors.black45,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const Spacer(),
+              // Indicador de página
+              Row(
+                children: List.generate(
+                  2,
+                  (index) => TweenAnimationBuilder<double>(
+                    tween: Tween<double>(
+                      begin: 0.0,
+                      end: _currentPage == index ? 1.0 : 0.0,
+                    ),
+                    duration: const Duration(milliseconds: 300),
+                    builder: (context, value, _) {
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        height: 6,
+                        width: value * 20 + 6,
+                        decoration: BoxDecoration(
+                          color: _currentPage == index
+                              ? AppColors.primary
+                              : (isDark ? Colors.white24 : Colors.black12),
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // ─── Carrossel ──────────────────────────────────────────────
         AnimatedBuilder(
           animation: _scaleAnimation,
-          builder: (context, child) {
-            return Transform.scale(scale: _scaleAnimation.value, child: child);
-          },
+          builder: (context, child) =>
+              Transform.scale(scale: _scaleAnimation.value, child: child),
           child: SizedBox(
-            height: 240, // Fixed height for carousel
+            height: 220,
             child: PageView.builder(
               controller: _pageController,
-              physics:
-                  const BouncingScrollPhysics(), // Add bouncing effect for better feedback
-              itemCount: 2, // Summary card and chart
+              physics: const BouncingScrollPhysics(),
+              itemCount: 2,
               onPageChanged: (index) {
-                setState(() {
-                  _currentPage = index;
-                });
-                // Add haptic feedback when switching pages
-                HapticFeedback.lightImpact();
+                setState(() => _currentPage = index);
+                HapticFeedback.selectionClick();
               },
               itemBuilder: (context, index) {
-                // Select which widget to show based on index
-                if (index == 0) {
-                  // Summary card page
-                  return Hero(
-                    tag: 'summary1-card',
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: SummaryCard(
-                        totalIncome: widget.totalIncome,
-                        totalExpense: widget.totalExpense,
-                        balance: widget.totalIncome - widget.totalExpense,
-                      ),
-                    ),
-                  );
-                } else {
-                  // Chart widget page
-                  return Hero(
-                    tag: 'chart-widget',
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Card(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: SummaryChart(
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: index == 0
+                      ? _buildIncomeExpenseCards(context)
+                      : SummaryChart(
                           totalIncome: widget.totalIncome,
                           totalExpense: widget.totalExpense,
                         ),
-                      ),
-                    ),
-                  );
-                }
-              },
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        // Animated page indicator dots
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(
-            2,
-            (index) => TweenAnimationBuilder(
-              tween: Tween<double>(
-                begin: 0.0,
-                end: _currentPage == index ? 1.0 : 0.0,
-              ),
-              duration: const Duration(milliseconds: 300),
-              builder: (context, double value, _) {
-                return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  height: 8,
-                  width: value * 24 + 8, // Animated width
-                  decoration: BoxDecoration(
-                    color:
-                        _currentPage == index
-                            ? Theme.of(context).colorScheme.primary
-                            : Colors.grey.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
                 );
               },
             ),
           ),
         ),
-        const SizedBox(height: 8),
-        // Swipe indicator text
+
+        // ─── Dica de swipe ─────────────────────────────────────────
         Padding(
-          padding: const EdgeInsets.only(top: 4.0),
+          padding: const EdgeInsets.only(top: 8, bottom: 4),
           child: Text(
-            'Arraste para Visualizar o ${_currentPage == 0 ? "Gráfico" : "Resumo"}',
+            _currentPage == 0 ? 'Deslize para ver o gráfico →' : '← Deslize para ver o resumo',
             style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade600,
+              fontSize: 11,
+              color: isDark ? Colors.white30 : Colors.black26,
               fontStyle: FontStyle.italic,
             ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildIncomeExpenseCards(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Row(
+      children: [
+        // Income card
+        Expanded(
+          child: _StatCard(
+            label: 'Receitas',
+            icon: Iconsax.home_trend_up,
+            value: widget.totalIncome,
+            gradient: const LinearGradient(
+              colors: [AppColors.income, Color(0xFF059669)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            isDark: isDark,
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Expense card
+        Expanded(
+          child: _StatCard(
+            label: 'Despesas',
+            icon: Iconsax.trend_down,
+            value: widget.totalExpense,
+            gradient: const LinearGradient(
+              colors: [AppColors.expense, Color(0xFFDC2626)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            isDark: isDark,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final double value;
+  final Gradient gradient;
+  final bool isDark;
+
+  const _StatCard({
+    required this.label,
+    required this.icon,
+    required this.value,
+    required this.gradient,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: (gradient as LinearGradient)
+                .colors
+                .first
+                .withValues(alpha: 0.35),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Ícone
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: Colors.white, size: 22),
+          ),
+          const Spacer(),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'R\$ ${value.toStringAsFixed(2).replaceAll('.', ',')}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
