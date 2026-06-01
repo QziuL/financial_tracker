@@ -11,17 +11,20 @@ import 'transaction_form.dart';
 class TransactionSheet extends StatelessWidget {
   final TransactionType type;
   final Command1<void, Failure, TransactionEntity> submitCommand;
+  final TransactionEntity? initialTransaction;
 
   const TransactionSheet({
     super.key,
     required this.type,
     required this.submitCommand,
+    this.initialTransaction,
   });
 
   static Future<void> show({
     required BuildContext context,
     required TransactionType type,
     required Command1<void, Failure, TransactionEntity> submitCommand,
+    TransactionEntity? initialTransaction,
   }) async {
     return showModalBottomSheet(
       context: context,
@@ -29,7 +32,11 @@ class TransactionSheet extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder:
           (context) =>
-              TransactionSheet(type: type, submitCommand: submitCommand),
+              TransactionSheet(
+                type: type, 
+                submitCommand: submitCommand,
+                initialTransaction: initialTransaction,
+              ),
     );
   }
 
@@ -106,7 +113,9 @@ class TransactionSheet extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        'Adicionar $formTitle',
+                        initialTransaction != null 
+                          ? 'Atualizar $formTitle'
+                          : 'Adicionar $formTitle',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
@@ -147,6 +156,7 @@ class TransactionSheet extends StatelessWidget {
                   type: type,
                   isIncome: isIncome,
                   submitCommand: submitCommand,
+                  initialTransaction: initialTransaction,
                 ),
               ),
             ),

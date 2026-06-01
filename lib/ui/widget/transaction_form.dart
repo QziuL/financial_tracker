@@ -13,11 +13,14 @@ class TransactionForm extends StatefulWidget {
   final TransactionType type;
   final bool isIncome;
 
+  final TransactionEntity? initialTransaction;
+
   const TransactionForm({
     super.key,
     required this.type,
     required this.isIncome,
     required this.submitCommand,
+    this.initialTransaction,
   });
 
   @override
@@ -35,6 +38,16 @@ class _TransactionFormState extends State<TransactionForm> {
 
   Color get _accentColorLight =>
       widget.isIncome ? AppColors.incomeLight : AppColors.expenseLight;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialTransaction != null) {
+      _titleController.text = widget.initialTransaction!.title;
+      _amountController.text = widget.initialTransaction!.amount.toStringAsFixed(2).replaceAll('.', ',');
+      _selectedDate = widget.initialTransaction!.date;
+    }
+  }
 
   @override
   void dispose() {
@@ -73,6 +86,7 @@ class _TransactionFormState extends State<TransactionForm> {
       final enteredAmount = double.parse(_amountController.text.replaceAll(',', '.'));
 
       final newTransaction = TransactionEntity(
+        id: widget.initialTransaction?.id,
         title: enteredTitle,
         amount: enteredAmount,
         date: _selectedDate,
@@ -301,7 +315,9 @@ class _TransactionFormState extends State<TransactionForm> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Adicionar ${widget.type.nameSingular}',
+                              widget.initialTransaction != null 
+                                ? 'Atualizar ${widget.type.nameSingular}' 
+                                : 'Adicionar ${widget.type.nameSingular}',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700,

@@ -143,7 +143,14 @@ class HomePageController {
     ));
 
     if (result.isSuccess) {
-      _transactions.value = [..._transactions.value, transaction];
+      final index = _transactions.value.indexWhere((t) => t.id == transaction.id);
+      if (index != -1) {
+        final list = [..._transactions.value];
+        list[index] = transaction;
+        _transactions.value = list;
+      } else {
+        _transactions.value = [..._transactions.value, transaction];
+      }
     }
 
     return result;

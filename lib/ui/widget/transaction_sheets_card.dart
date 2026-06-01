@@ -11,6 +11,7 @@ class TransactionCardSheets extends StatefulWidget {
   final List<TransactionEntity> incomeTransactions;
   final List<TransactionEntity> expenseTransactions;
   final Function(String id) onDelete;
+  final Function(TransactionEntity transaction) onEdit;
   final Command1<void, Failure, TransactionEntity> undoDelete;
   final BuildContext scaffoldContext;
 
@@ -19,6 +20,7 @@ class TransactionCardSheets extends StatefulWidget {
     required this.incomeTransactions,
     required this.expenseTransactions,
     required this.onDelete,
+    required this.onEdit,
     required this.undoDelete,
     required this.scaffoldContext,
   });
@@ -57,9 +59,10 @@ class _TransactionCardSheetsState extends State<TransactionCardSheets>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.3)
-                : Colors.black.withValues(alpha: 0.06),
+            color:
+                isDark
+                    ? Colors.black.withValues(alpha: 0.3)
+                    : Colors.black.withValues(alpha: 0.06),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -98,9 +101,10 @@ class _TransactionCardSheetsState extends State<TransactionCardSheets>
                 // Tab bar customizado
                 Container(
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.06)
-                        : Colors.black.withValues(alpha: 0.04),
+                    color:
+                        isDark
+                            ? Colors.white.withValues(alpha: 0.06)
+                            : Colors.black.withValues(alpha: 0.04),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: TabBar(
@@ -108,9 +112,10 @@ class _TransactionCardSheetsState extends State<TransactionCardSheets>
                     dividerColor: Colors.transparent,
                     indicator: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: _tabController.index == 0
-                            ? [AppColors.income, const Color(0xFF059669)]
-                            : [AppColors.expense, const Color(0xFFDC2626)],
+                        colors:
+                            _tabController.index == 0
+                                ? [AppColors.income, const Color(0xFF059669)]
+                                : [AppColors.expense, const Color(0xFFDC2626)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -176,9 +181,10 @@ class _TransactionCardSheetsState extends State<TransactionCardSheets>
 
   Widget _buildCountBadge(BuildContext context) {
     final isIncome = _tabController.index == 0;
-    final count = isIncome
-        ? widget.incomeTransactions.length
-        : widget.expenseTransactions.length;
+    final count =
+        isIncome
+            ? widget.incomeTransactions.length
+            : widget.expenseTransactions.length;
     final color = isIncome ? AppColors.income : AppColors.expense;
 
     return AnimatedContainer(
@@ -224,8 +230,7 @@ class _TransactionCardSheetsState extends State<TransactionCardSheets>
               title,
               style: TextStyle(
                 color: isSelected ? Colors.white : Colors.grey,
-                fontWeight:
-                    isSelected ? FontWeight.w700 : FontWeight.w500,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 fontSize: 13,
               ),
             ),
@@ -322,7 +327,10 @@ class _TransactionCardSheetsState extends State<TransactionCardSheets>
                       ScaffoldMessenger.of(widget.scaffoldContext).showSnackBar(
                         SnackBar(
                           content: Text(
-                            widget.undoDelete.resultSignal.value
+                            widget
+                                    .undoDelete
+                                    .resultSignal
+                                    .value
                                     ?.failureValueOrNull
                                     ?.toString() ??
                                 'Erro ao restaurar',
@@ -336,90 +344,104 @@ class _TransactionCardSheetsState extends State<TransactionCardSheets>
               ),
             );
           },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            margin: const EdgeInsets.symmetric(vertical: 4),
-            decoration: BoxDecoration(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? AppColors.dividerDark.withValues(alpha: 0.5)
-                  : color.withValues(alpha: 0.04),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: color.withValues(alpha: 0.15),
-                width: 1,
+          child: InkWell(
+            onTap: () => widget.onEdit(transaction),
+            borderRadius: BorderRadius.circular(16),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: const EdgeInsets.symmetric(vertical: 4),
+              decoration: BoxDecoration(
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.dividerDark.withValues(alpha: 0.5)
+                        : color.withValues(alpha: 0.04),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: color.withValues(alpha: 0.15),
+                  width: 1,
+                ),
               ),
-            ),
-            child: ListTile(
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              leading: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: isIncome
-                        ? [
-                            AppColors.income.withValues(alpha: 0.2),
-                            AppColors.income.withValues(alpha: 0.1),
-                          ]
-                        : [
-                            AppColors.expense.withValues(alpha: 0.2),
-                            AppColors.expense.withValues(alpha: 0.1),
-                          ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
+                leading: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors:
+                          isIncome
+                              ? [
+                                AppColors.income.withValues(alpha: 0.2),
+                                AppColors.income.withValues(alpha: 0.1),
+                              ]
+                              : [
+                                AppColors.expense.withValues(alpha: 0.2),
+                                AppColors.expense.withValues(alpha: 0.1),
+                              ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  borderRadius: BorderRadius.circular(12),
+                  child: Icon(icon, color: color, size: 20),
                 ),
-                child: Icon(icon, color: color, size: 20),
-              ),
-              title: Text(
-                transaction.title,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
+                title: Text(
+                  transaction.title,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              subtitle: Row(
-                children: [
-                  Icon(Iconsax.calendar_1,
+                subtitle: Row(
+                  children: [
+                    Icon(
+                      Iconsax.calendar_1,
                       size: 11,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white38
-                          : Colors.black38),
-                  const SizedBox(width: 3),
-                  Text(
-                    Formatter.formatDate(transaction.date),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white38
-                          : Colors.black38,
-                      fontSize: 11,
+                      color:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white38
+                              : Colors.black38,
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      Formatter.formatDate(transaction.date),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color:
+                            Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white38
+                                : Colors.black38,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    (isIncome ? '+' : '-') +
+                        Formatter.formatCurrency(transaction.amount),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: color,
+                      fontSize: 13,
                     ),
                   ),
-                ],
-              ),
-              trailing: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  (isIncome ? '+' : '-') +
-                      Formatter.formatCurrency(transaction.amount),
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: color,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
+                ), // closes trailing Container
+              ), // closes ListTile
+            ), // closes AnimatedContainer
+          ), // closes InkWell
+        ); // closes Dismissible
       },
     );
   }
@@ -428,12 +450,12 @@ class _TransactionCardSheetsState extends State<TransactionCardSheets>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final color = isIncome ? AppColors.income : AppColors.expense;
     final icon = isIncome ? Iconsax.coin : Iconsax.shopping_cart;
-    final message = isIncome
-        ? 'Nenhuma receita registrada'
-        : 'Nenhuma despesa registrada';
-    final hint = isIncome
-        ? 'Adicione uma receita para começar!'
-        : 'Adicione uma despesa para acompanhar seus gastos!';
+    final message =
+        isIncome ? 'Nenhuma receita registrada' : 'Nenhuma despesa registrada';
+    final hint =
+        isIncome
+            ? 'Adicione uma receita para começar!'
+            : 'Adicione uma despesa para acompanhar seus gastos!';
 
     return Center(
       child: Padding(
