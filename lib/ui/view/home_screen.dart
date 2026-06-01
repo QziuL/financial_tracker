@@ -291,7 +291,9 @@ class _HomeScreenState extends State<HomeScreen>
                           onDelete: (id) {
                             viewModelController.deleteTransaction.execute(id);
                           },
-                          onEdit: (transaction) => _showEditSheet(context, transaction),
+                          onEdit:
+                              (transaction) =>
+                                  _showEditSheet(context, transaction),
                           undoDelete:
                               viewModelController.undoDelectedTransaction,
                           scaffoldContext: context,
@@ -305,66 +307,66 @@ class _HomeScreenState extends State<HomeScreen>
               ],
             ),
             // ─── Loading overlay banner (apenas no refresh manual) ───
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 350),
-              curve: Curves.easeOutCubic,
-              top: (isLoading && !_isFirstLoad) ? 0 : -80,
-              left: 0,
-              right: 0,
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [AppColors.primary, AppColors.primaryLight],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.4),
-                            blurRadius: 16,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Atualizando dados...',
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodyMedium?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            // AnimatedPositioned(
+            //   duration: const Duration(milliseconds: 350),
+            //   curve: Curves.easeOutCubic,
+            //   top: (isLoading && !_isFirstLoad) ? 0 : -80,
+            //   left: 0,
+            //   right: 0,
+            //   child: SafeArea(
+            //     child: Padding(
+            //       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            //       child: Material(
+            //         color: Colors.transparent,
+            //         child: Container(
+            //           padding: const EdgeInsets.symmetric(
+            //             horizontal: 16,
+            //             vertical: 12,
+            //           ),
+            //           decoration: BoxDecoration(
+            //             gradient: const LinearGradient(
+            //               colors: [AppColors.primary, AppColors.primaryLight],
+            //               begin: Alignment.centerLeft,
+            //               end: Alignment.centerRight,
+            //             ),
+            //             borderRadius: BorderRadius.circular(16),
+            //             boxShadow: [
+            //               BoxShadow(
+            //                 color: AppColors.primary.withValues(alpha: 0.4),
+            //                 blurRadius: 16,
+            //                 offset: const Offset(0, 4),
+            //               ),
+            //             ],
+            //           ),
+            //           child: Row(
+            //             children: [
+            //               const SizedBox(
+            //                 width: 18,
+            //                 height: 18,
+            //                 child: CircularProgressIndicator(
+            //                   strokeWidth: 2.5,
+            //                   valueColor: AlwaysStoppedAnimation<Color>(
+            //                     Colors.white,
+            //                   ),
+            //                 ),
+            //               ),
+            //               const SizedBox(width: 12),
+            //               Text(
+            //                 'Atualizando dados...',
+            //                 style: Theme.of(
+            //                   context,
+            //                 ).textTheme.bodyMedium?.copyWith(
+            //                   color: Colors.white,
+            //                   fontWeight: FontWeight.w600,
+            //                 ),
+            //               ),
+            //             ],
+            //           ),
+            //         ),
+            //       ),
+            //     ),
+            //   ),
+            // ),
           ],
         );
       }),
